@@ -24,7 +24,7 @@ class ImgRecognizer:
     def _load(self, path, target_value):
         training_imgs = os.listdir(path)
         for f in training_imgs:
-            img = Image.open(path+'/'+f)
+            img = Image.open(path + '/' + f)
             img = img.resize(self.downscale_res, Image.BILINEAR)
             self.training_data.append(np.array(img.getdata()).flatten())
             self.target_values.append(target_value)
@@ -55,6 +55,9 @@ class ImgRecognizer:
         self._load('Training_Data/Yellow_Striped_V', 17)
         self._load('Training_Data/Yellow_Wrapped', 24)
         self._load('Training_Data/Chocolate', 12)
+        self._load('Training_Data/Block', 25)
+        self._load('Training_Data/BlockChocolate', 26)
+        self._load('Training_Data/Blocked', 27)
 
     def train(self):
         if os.path.isfile('svc.dat'):
@@ -70,19 +73,11 @@ class ImgRecognizer:
         np_train_data = np.array(self.training_data)
         np_values = np.array(self.target_values)
         data, test_data, train_target, test_target = cross_validation.train_test_split(np_train_data, np_values,
-                                                                                       test_size=0.4, random_state=0)
+                                                                                       test_size=0.25, random_state=42)
         self.svc.fit(data, train_target)
-        print self.svc.score(test_data, test_target)
+        print(self.svc.score(test_data, test_target))
 
     def predict(self, img):
         resized_img = img.resize(self.downscale_res, Image.BILINEAR)
         np_img = np.array(resized_img.getdata()).flatten()
-        return int(self.svc.predict(np_img))
-
-
-
-
-
-
-
-
+        return int(self.svc.predict(np_img.reshape(1, -1)))

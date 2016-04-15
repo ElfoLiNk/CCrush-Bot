@@ -4,8 +4,10 @@ from copy import deepcopy
 
 class SimpleSolver:
     def __init__(self):
-        self.board_size = 9
-        self.match_list = [(0, 1, 13, 19), (2, 3, 14, 20), (4, 5, 15, 21), (6, 7, 18, 22), (8, 9, 16, 23), (10, 11, 17, 24)]
+        self.board_size_y = 9
+        self.board_size_x = 9
+        self.match_list = [(0, 1, 13, 19), (2, 3, 14, 20), (4, 5, 15, 21), (6, 7, 18, 22), (8, 9, 16, 23),
+                           (10, 11, 17, 24)]
 
         self.special_candies = [1, 3, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
         self.simple_candies = [0, 2, 4, 6, 8, 10]
@@ -44,8 +46,8 @@ class SimpleSolver:
 
     def compute_explosions_chocolate(self, board, color):
         to_explode = []
-        for i in range(self.board_size):
-            for j in range(self.board_size):
+        for i in range(self.board_size_y):
+            for j in range(self.board_size_x):
                 if self.candy_matches(board[i][j], color):
                     to_explode.append((i, j))
 
@@ -55,10 +57,10 @@ class SimpleSolver:
         to_explode = []
         candy_type = board[coords[0]][coords[1]]
         if candy_type in self.striped_candies_h:
-            for k in range(self.board_size):
+            for k in range(self.board_size_x):
                 to_explode.append((coords[0], k))
         if candy_type in self.striped_candies_v:
-            for k in range(self.board_size):
+            for k in range(self.board_size_y):
                 to_explode.append((k, coords[1]))
 
         return to_explode
@@ -82,8 +84,11 @@ class SimpleSolver:
             for d in dirs:
                 i = start[0] + d[0]
                 j = start[1] + d[1]
-                while 0 <= i < self.board_size and 0 <= j < self.board_size and board[i][j] != -1 \
-                        and self.candy_matches(board[i][j], board[start[0]][start[1]]):
+
+                while (0 <= i < self.board_size_y and
+                                   0 <= j < self.board_size_x and
+                               board[i][j] != -1 and
+                           self.candy_matches(board[i][j], board[start[0]][start[1]])):
                     open_list.append((i, j))
                     i += d[0]
                     j += d[1]
@@ -119,7 +124,7 @@ class SimpleSolver:
             board[start[0]][start[1]] += 1
             to_explode.remove(start)
 
-        #if len(to_explode) > 0:
+        # if len(to_explode) > 0:
         #    print '\n\nStarting board:'
         #    dbg.print_board(board)
 
@@ -128,15 +133,15 @@ class SimpleSolver:
             i, j = coord
 
             while i > 0:
-                if board[i-1][j] != -1 and (i-1, j) not in self.potential_start_coords:
+                if board[i - 1][j] != -1 and (i - 1, j) not in self.potential_start_coords:
                     self.potential_start_coords.add((i, j))
-                board[i][j], board[i-1][j] = board[i-1][j], board[i][j]
+                board[i][j], board[i - 1][j] = board[i - 1][j], board[i][j]
                 i -= 1
             board[i][j] = -1
 
-        #if len(to_explode) > 0:
-           # print '\nResult from {0}, count={1}, score={2}:'.format(start, len(to_explode), score)
-            #dbg.print_board(board)
+            # if len(to_explode) > 0:
+            # print '\nResult from {0}, count={1}, score={2}:'.format(start, len(to_explode), score)
+            # dbg.print_board(board)
 
         return score, board
 
@@ -156,8 +161,8 @@ class SimpleSolver:
                         total_score += score + multiplier * 60
                         multiplier += 2
             else:
-                for i in range(0, self.board_size):
-                    for j in range(0, self.board_size):
+                for i in range(0, self.board_size_y - 1):
+                    for j in range(0, self.board_size_x - 1):
                         score, new_board = self.compute_explosions((i, j), end, new_board)
                         if score > 0:
                             total_score += score + multiplier * 60
@@ -166,28 +171,30 @@ class SimpleSolver:
         return total_score, new_board
 
     def check_direction(self, start, dir):
-            end = (start[0]+dir[0], start[1]+dir[1])
-            board = deepcopy(self.game_board)
-            if start[0] < 0 or start[0] > self.board_size or end[0] < 0 or end[0] > self.board_size\
-                    or start[1] < 0 or start[1] > self.board_size or end[1] < 0 or end[1] > self.board_size:
-                return -1, [], None
+        end = (start[0] + dir[0], start[1] + dir[1])
+        board = deepcopy(self.game_board)
+        if start[0] < 0 or start[0] > self.board_size_y or end[0] < 0 or end[0] > self.board_size_y \
+                or start[1] < 0 or start[1] > self.board_size_x or end[1] < 0 or end[1] > self.board_size_x:
+            return -1, [], None
 
-            # swap
-            board[start[0]][start[1]], board[end[0]][end[1]] = board[end[0]][end[1]], board[start[0]][start[1]]
-            score_start, start_board = self.evaluate_board(start, end, board)
-            score_end, end_board = self.evaluate_board(end, start, board)
+        if board[start[0]][start[1]] in  [25, 27] or board[end[0]][end[1]] in [25 , 27]:
+            return -1, [], None
+        # swap
+        board[start[0]][start[1]], board[end[0]][end[1]] = board[end[0]][end[1]], board[start[0]][start[1]]
+        score_start, start_board = self.evaluate_board(start, end, board)
+        score_end, end_board = self.evaluate_board(end, start, board)
 
-            if score_start > score_end:
-                return score_start, [start, end], start_board
-            else:
-                return score_end, [end, start], end_board
+        if score_start > score_end:
+            return score_start, [start, end], start_board
+        else:
+            return score_end, [end, start], end_board
 
     def solve_board(self, board):
         self.game_board = board
         max_score = 0
         chosen_move = []
-        for i in range(0, 8):
-            for j in range(0, 8):
+        for i in range(0, self.board_size_y - 1):
+            for j in range(0, self.board_size_x - 1):
                 possible_directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
                 for d in possible_directions:
                     score, move, b = self.check_direction((i, j), d)
@@ -196,4 +203,3 @@ class SimpleSolver:
                         chosen_move = move
 
         return max_score, chosen_move
-
